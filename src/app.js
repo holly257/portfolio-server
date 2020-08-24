@@ -4,6 +4,8 @@ const morgan = require('morgan')
 const cors = require('cors')
 const helmet = require('helmet')
 const { NODE_ENV } = require('./config')
+const nodemailer = require("nodemailer");
+const jsonParser = express.json();
 
 const app = express()
 
@@ -18,6 +20,35 @@ app.use(cors())
 app.get('/', (req, res) => {
     res.send('Hello world')
 })
+
+app.post('/email', jsonParser, (req, res) => {
+    const { contact_name, email_from, email_body } = req.body;
+
+    async function main() {
+
+    const transporter = nodemailer.createTransport({
+        host: 'smtp.gmail.com',
+        port: 587,
+        auth: {
+            user: 'hollymrogers12@gmail.com',
+            pass: process.env.email_pass
+        }
+    });
+
+    let info = await transporter.sendMail({
+        from: email_from,
+        to: "hollymrogers12@gmail.com", 
+        subject: `Portfolio Contact Sheet - ${contact_name}`, 
+        text: email_body, 
+    });
+
+    res.send(info)
+    
+    }
+
+    main().catch(console.error);
+})
+
 
 app.use(function errorHandler(error, req, res, next) {
     let response
