@@ -9,28 +9,18 @@ const nodemailer = require('nodemailer');
 const jsonParser = express.json();
 
 const app = express();
+app.use(cors());
 
 const morganOption = NODE_ENV === 'production' ? 'tiny' : 'common';
 
 app.use(morgan(morganOption));
 app.use(helmet());
 
-var whitelist = ['https://holly-rogers.vercel.app', 'http://localhost:3000'];
-var corsOptions = {
-    origin: function (origin, callback) {
-        if (whitelist.indexOf(origin) !== -1) {
-            callback(null, true);
-        } else {
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
-};
-
 app.get('/', (req, res) => {
     res.send('Hello world');
 });
 
-app.post('/email', cors(corsOptions), jsonParser, (req, res) => {
+app.post('/email', jsonParser, (req, res) => {
     const { contact_name, email_from, email_body } = req.body;
 
     async function main() {
