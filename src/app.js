@@ -1,69 +1,70 @@
-require('dotenv').config()
-const express = require('express')
-const morgan = require('morgan')
-const cors = require('cors')
+require('dotenv').config();
+const express = require('express');
+const morgan = require('morgan');
+const cors = require('cors');
 const { CLIENT_ORIGIN } = require('./config');
-const helmet = require('helmet')
-const { NODE_ENV } = require('./config')
-const nodemailer = require("nodemailer");
+const helmet = require('helmet');
+const { NODE_ENV } = require('./config');
+const nodemailer = require('nodemailer');
 const jsonParser = express.json();
 
-const app = express()
+const app = express();
 
-const morganOption = (NODE_ENV === 'production')
-    ? 'tiny'
-    : 'common';
+const morganOption = NODE_ENV === 'production' ? 'tiny' : 'common';
 
-app.use(morgan(morganOption))
-app.use(helmet())
-app.use(function(req, res, next) {
-    res.header("Access-Control-Allow-Origin", 'https://holly-rogers.vercel.app'); 
-    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-    next();
-  });
+app.use(morgan(morganOption));
+app.use(helmet());
+
+var whitelist = ['https://holly-rogers.vercel.app', 'http://localhost:3000'];
+var corsOptions = {
+    origin: function (origin, callback) {
+        if (whitelist.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+};
 
 app.get('/', (req, res) => {
-    res.send('Hello world')
-})
+    res.send('Hello world');
+});
 
-app.post('/email', jsonParser, (req, res) => {
+app.post('/email', cors(corsOptions), jsonParser, (req, res) => {
     const { contact_name, email_from, email_body } = req.body;
 
     async function main() {
+        const transporter = nodemailer.createTransport({
+            host: 'smtp.gmail.com',
+            port: 587,
+            auth: {
+                user: 'hollymrogers12@gmail.com',
+                pass: process.env.email_pass,
+            },
+        });
 
-    const transporter = nodemailer.createTransport({
-        host: 'smtp.gmail.com',
-        port: 587,
-        auth: {
-            user: 'hollymrogers12@gmail.com',
-            pass: process.env.email_pass
-        }
-    });
+        let info = await transporter.sendMail({
+            from: email_from,
+            to: 'hollymrogers12@gmail.com',
+            subject: `Portfolio Contact Sheet - ${contact_name}`,
+            text: email_body,
+        });
 
-    let info = await transporter.sendMail({
-        from: email_from,
-        to: "hollymrogers12@gmail.com", 
-        subject: `Portfolio Contact Sheet - ${contact_name}`, 
-        text: email_body, 
-    });
-
-    res.send(info)
-    
+        res.send(info);
     }
 
     main().catch(console.error);
-})
-
+});
 
 app.use(function errorHandler(error, req, res, next) {
-    let response
+    let response;
     if (NODE_ENV === 'production') {
-        response = { error: { message: 'server error' } }
+        response = { error: { message: 'server error' } };
     } else {
-        console.error(error)
-        response = { message: error.message, error }
+        console.error(error);
+        response = { message: error.message, error };
     }
-    res.status(500).json(response)
-})
+    res.status(500).json(response);
+});
 
-module.exports = app
+module.exports = app;
