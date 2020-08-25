@@ -9,7 +9,11 @@ const nodemailer = require('nodemailer');
 const jsonParser = express.json();
 
 const app = express();
-app.use(cors());
+app.use(
+    cors({
+        origin: CLIENT_ORIGIN,
+    })
+);
 
 const morganOption = NODE_ENV === 'production' ? 'tiny' : 'common';
 
