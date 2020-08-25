@@ -37,7 +37,7 @@ app.post('/email', jsonParser, (req, res) => {
             from: email_from,
             to: 'hollymrogers12@gmail.com',
             subject: `Portfolio Contact Sheet - ${contact_name}`,
-            text: email_body,
+            text: `${email_body} contact email: ${email_from}`,
         });
 
         res.send(info);
